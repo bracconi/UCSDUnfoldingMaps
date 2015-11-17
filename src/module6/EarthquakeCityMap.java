@@ -2,6 +2,7 @@ package module6;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import de.fhpotsdam.unfolding.UnfoldingMap;
@@ -117,7 +118,7 @@ public class EarthquakeCityMap extends PApplet {
 
 	    // could be used for debugging
 	    printQuakes();
-	 		
+	    sortAndPrint(20);	
 	    // (3) Add markers to map
 	    //     NOTE: Country markers are not added to the map.  They are used
 	    //           for their geometric properties
@@ -131,13 +132,26 @@ public class EarthquakeCityMap extends PApplet {
 	public void draw() {
 		background(0);
 		map.draw();
-		addKey();
 		
+		addKey();
+		showInfo();
 	}
 	
 	
 	// TODO: Add the method:
-	//   private void sortAndPrint(int numToPrint)
+	private void sortAndPrint(int numToPrint) {
+		ArrayList<EarthquakeMarker> arrlist = new ArrayList<EarthquakeMarker>();
+		EarthquakeMarker list2[] = new EarthquakeMarker[quakeMarkers.size()];
+		list2 = quakeMarkers.toArray(list2);
+		List<EarthquakeMarker> stooges = Arrays.asList(list2);
+		Collections.sort(stooges,Collections.reverseOrder());
+		int i = 0;
+		for (i=0;i<numToPrint;i++){
+			if( i > stooges.size()) break;
+			EarthquakeMarker em = stooges.get(i);
+			System.out.println(em.getTitle());
+		}
+	}
 	// and then call that method from setUp
 	
 	/** Event handler that gets called automatically when the 
@@ -207,23 +221,80 @@ public class EarthquakeCityMap extends PApplet {
 			if (!marker.isHidden() && marker.isInside(map, mouseX, mouseY)) {
 				lastClicked = (CommonMarker)marker;
 				// Hide all the other earthquakes and hide
+			
 				for (Marker mhide : cityMarkers) {
 					if (mhide != lastClicked) {
 						mhide.setHidden(true);
 					}
+					
 				}
+			
+				
+			
 				for (Marker mhide : quakeMarkers) {
 					EarthquakeMarker quakeMarker = (EarthquakeMarker)mhide;
 					if (quakeMarker.getDistanceTo(marker.getLocation()) 
 							> quakeMarker.threatCircle()) {
 						quakeMarker.setHidden(true);
 					}
+					
+		
+					
+					
 				}
 				return;
 			}
 		}		
 	}
-	
+	private void showInfo() {
+		int nearby = 0;
+		float  avgmagnitude = 0.0f ;
+		float  total = 0.0f ;
+		ArrayList<Float> magnitudes = new ArrayList<Float>() ;
+		if (lastClicked != null) {
+			for (Marker mhide : quakeMarkers) {
+				EarthquakeMarker quakeMarker = (EarthquakeMarker)mhide;
+				if (quakeMarker.getDistanceTo(lastClicked.getLocation()) 
+						> quakeMarker.threatCircle()) {
+					quakeMarker.setHidden(true);
+				}
+				
+			// count the number of nearby earthquakes :
+				
+				if (quakeMarker.getDistanceTo(lastClicked.getLocation()) 
+						<= quakeMarker.threatCircle()) {
+					nearby++;
+					magnitudes.add(quakeMarker.getMagnitude());
+				//	recent = quakeMarker.
+				}
+				
+				
+			}
+			if(nearby > 0) {
+				for(float magnitude : magnitudes) {
+				        total += magnitude;
+				}
+				avgmagnitude = total/magnitudes.size();
+				
+				fill(255, 250, 240);
+				
+				int xbase = 250;
+				int ybase = 110;
+				String info = "Nearby earthquake: " + nearby + " Avg magnitude: " + avgmagnitude; 
+
+				rect(xbase, ybase, textWidth(info)+6, 39);
+							
+				fill(0);
+				textAlign(LEFT, CENTER);
+				textSize(12);
+				text(info, xbase+3, ybase+25);
+			}
+		}
+		
+		
+		
+
+	}
 	// Helper method that will check if an earthquake marker was clicked on
 	// and respond appropriately
 	private void checkEarthquakesForClick()
